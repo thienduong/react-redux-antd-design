@@ -16,6 +16,13 @@ const _LIB_DIR = path.join(__dirname, '..', 'public/libraries'),
   BOWER_DIR = path.join(__dirname, '..', 'bower_components'),
   PLUGINS_DIR = path.join(__dirname, '..', 'public/plugins')
 
+const fs = require('fs');
+
+const lessToJs = require('less-vars-to-js');
+// debugger
+// const a = fs.readFileSync(path.join(__dirname, '../src/styles/ant-theme-vars.less'), 'utf8');
+const themeVariables = lessToJs(fs.readFileSync(path.join(__dirname, '../src/styles/ant-theme-vars.less'), 'utf8'));
+
 const config = {
   entry: {
     normalize: [
@@ -81,6 +88,8 @@ config.module.rules.push({
             useBuiltIns: true // we polyfill Object.assign in src/normalize.js
           },
         ],
+        // load antd less
+        ['import', {'libraryName': 'antd', 'style': true} ],
       ],
       presets: [
         'babel-preset-react',
@@ -173,6 +182,8 @@ config.module.rules.push(
         {
           loader: 'less-loader',
           options: {
+            // overwrite antd theme(optional -> we can comment this row)
+            modifyVars: themeVariables,
             javascriptEnabled: true,
             sourceMap: project.sourcemaps,
             includePaths: [
