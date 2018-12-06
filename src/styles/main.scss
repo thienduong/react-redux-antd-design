@@ -1,6 +1,11 @@
 @import 'base';
 @import '~bootstrap/scss/bootstrap.scss';
 
+// add more lib
+$fa-font-path: "~font-awesome/fonts";
+@import '~font-awesome/css/font-awesome.min.css';
+@import '~antd/dist/antd.css';
+
 // Some best-practice CSS that's useful for most apps
 // Just remove them if they're not what you want
 html {

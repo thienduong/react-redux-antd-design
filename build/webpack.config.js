@@ -11,6 +11,11 @@ const __DEV__ = project.env === 'development'
 const __TEST__ = project.env === 'test'
 const __PROD__ = project.env === 'production'
 
+const _LIB_DIR = path.join(__dirname, '..', 'public/libraries'),
+  NODE_DIR = path.join(__dirname, '..', 'node_modules'),
+  BOWER_DIR = path.join(__dirname, '..', 'bower_components'),
+  PLUGINS_DIR = path.join(__dirname, '..', 'public/plugins')
+
 const config = {
   entry: {
     normalize: [
@@ -27,6 +32,9 @@ const config = {
     publicPath: project.publicPath,
   },
   resolve: {
+    alias: {
+      jquery: NODE_DIR + '/jquery/dist/jquery.min.js'
+    },
     modules: [
       inProject(project.srcDir),
       'node_modules',
@@ -39,7 +47,7 @@ const config = {
   },
   plugins: [
     new webpack.DefinePlugin(Object.assign({
-      'process.env': { NODE_ENV: JSON.stringify(project.env) },
+      'process.env': {NODE_ENV: JSON.stringify(project.env)},
       __DEV__,
       __TEST__,
       __PROD__,
@@ -96,53 +104,95 @@ const extractStyles = new ExtractTextPlugin({
   disable: __DEV__,
 })
 
-config.module.rules.push({
-  test: /\.(sass|scss)$/,
-  loader: extractStyles.extract({
-    fallback: 'style-loader',
-    use: [
-      {
-        loader: 'css-loader',
-        options: {
-          sourceMap: project.sourcemaps,
-          minimize: {
-            autoprefixer: {
-              add: true,
-              remove: true,
-              browsers: ['last 2 versions'],
+config.module.rules.push(
+  {
+    test: /\.(sass|scss)$/,
+    loader: extractStyles.extract({
+      fallback: 'style-loader',
+      use: [
+        {
+          loader: 'css-loader',
+          options: {
+            sourceMap: project.sourcemaps,
+            minimize: {
+              autoprefixer: {
+                add: true,
+                remove: true,
+                browsers: ['last 2 versions'],
+              },
+              discardComments: {
+                removeAll: true,
+              },
+              discardUnused: false,
+              mergeIdents: false,
+              reduceIdents: false,
+              safe: true,
+              sourcemap: project.sourcemaps,
             },
-            discardComments: {
-              removeAll : true,
-            },
-            discardUnused: false,
-            mergeIdents: false,
-            reduceIdents: false,
-            safe: true,
-            sourcemap: project.sourcemaps,
           },
         },
-      },
-      {
-        loader: 'sass-loader',
-        options: {
-          sourceMap: project.sourcemaps,
-          includePaths: [
-            inProjectSrc('styles'),
-          ],
+        {
+          loader: 'sass-loader',
+          options: {
+            sourceMap: project.sourcemaps,
+            includePaths: [
+              inProjectSrc('styles'),
+            ],
+          },
+        }
+      ],
+    })
+  },
+  {
+    test: /\.less$/,
+    loader: extractStyles.extract({
+      fallback: 'style-loader',
+      use: [
+        {
+          loader: 'css-loader',
+          options: {
+            javascriptEnabled: true,
+            sourceMap: project.sourcemaps,
+            minimize: {
+              autoprefixer: {
+                add: true,
+                remove: true,
+                browsers: ['last 2 versions'],
+              },
+              discardComments: {
+                removeAll: true,
+              },
+              discardUnused: false,
+              mergeIdents: false,
+              reduceIdents: false,
+              safe: true,
+              sourcemap: project.sourcemaps,
+            },
+          },
         },
-      }
-    ],
-  })
-})
+        {
+          loader: 'less-loader',
+          options: {
+            javascriptEnabled: true,
+            sourceMap: project.sourcemaps,
+            includePaths: [
+              inProjectSrc('styles'),
+            ],
+          },
+        }
+      ],
+    })
+  }
+)
 config.plugins.push(extractStyles)
 
 // Images
 // ------------------------------------
 config.module.rules.push({
-  test    : /\.(png|jpg|gif)$/,
-  loader  : 'url-loader',
-  options : {
-    limit : 8192,
+  test: /\.(png|jpg|gif|svg)$/,
+  loader: 'url-loader',
+  options: {
+    limit: 8192,
   },
 })
 
@@ -160,11 +210,11 @@ config.module.rules.push({
   const mimetype = font[1]
 
   config.module.rules.push({
-    test    : new RegExp(`\\.${extension}$`),
-    loader  : 'url-loader',
-    options : {
-      name  : 'fonts/[name].[ext]',
-      limit : 10000,
+    test: new RegExp(`\\.${extension}$`),
+    loader: 'url-loader',
+    options: {
+      name: 'fonts/[name].[ext]',
+      limit: 10000,
       mimetype,
     },
   })
@@ -178,6 +228,13 @@ config.plugins.push(new HtmlWebpackPlugin({
   minify: {
     collapseWhitespace: true,
   },
+}))
+
+config.plugins.push(new webpack.ProvidePlugin({
+  '$': 'jquery',
+  'window.jQuery': 'jquery',
+  'jQuery': 'jquery',
+  'window.$': 'jquery',
 }))
 
 // Development Tools
@@ -201,7 +258,7 @@ if (!__TEST__) {
     bundles.unshift('vendor')
     config.entry.vendor = project.vendors
   }
-  config.plugins.push(new webpack.optimize.CommonsChunkPlugin({ names: bundles }))
+  config.plugins.push(new webpack.optimize.CommonsChunkPlugin({names: bundles}))
 }
 
 // Production Optimizations
